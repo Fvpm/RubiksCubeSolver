@@ -5,6 +5,9 @@ class Cube(object):
     #This class represents a rubik's cube as a simple 48-long list of 6 possible values. The class has the ability to make moves, mapping these values to different positions according to how a rubik's cube would move. The efficient moves make this class idea for implementation of a solving algorithm, which is it's purpose in the program. Because the Cube3D class cannot make moves quickly do to it's connection to vpython objects,
 
 
+    wholeTurnDict = { "x" : {'f':'u','u':'b','b':'d','d':'f','l':'l','r':'r'}, "X": {'f':'d','d':'b','b':'u','u':'f','l':'l','r':'r'},
+                      "y" : {'f':'l','l':'b','b':'r','r':'f','u':'u','d':'d'}, "Y": {'f':'r','r':'b','b':'l','l':'f','u':'u','d':'d'},
+                      "z" : {'u':'r','r':'d','d':'l','l':'u','f':'f','b':'b'}, "Z": {'u':'l','l':'d','d':'r','r':'u','f':'f','b':'b'}}
     turnMaps = {'u':[(0,2),(2,4),(4,6),(6,0),(1,3),(3,5),(5,7),(7,1),
                           (32,16),(16,40),(40,24),(24,32),(33,17),(34,18),(17,41),(18,42),(41,25),(42,26),(25,33),(26,34)],
                      'd':[(8,10),(10,12),(12,14),(14,8),(9,11),(11,13),(13,15),(15,9),
@@ -36,7 +39,7 @@ class Cube(object):
     turnMaps.update(reverseMaps)
 
 
-    def __init__(self, _stickers = None):
+    def __init__(self, _stickers = None, _solution = []):
         #Creates a new cube with position set by creator.
         #_stickers should be an array of length 48 containing 8 instances of each face value
         if _stickers == None: 
@@ -50,6 +53,12 @@ class Cube(object):
             return
         #TODO check for correct values
         self.stickers = _stickers
+        self.solution = _solution
+
+    def copy(self):
+        #returns a new cube identical to this one
+        newCube = Cube(self.stickers.copy(), self.solution.copy())
+        return newCube
                 
     def move(self,face):
         #Makes a move on the cube. 
@@ -60,11 +69,25 @@ class Cube(object):
             newStickers[t[1]] = self.stickers[t[0]]
         self.stickers = newStickers
 
+    def wholeTurn(self, axis):
+        #axis should be in [x, X, y, Y, z, Z]
+        if axis not in ['x','X','y','Y','z','Z']:
+            print("error 71 incorrect wholeTurn() input")
+            return
+        mapDict = self.wholeTurnDict[axis]
+        newStickers = [0] * 48
+        for i in range(48):
+            newStickers[i] = mapDict[self.stickers[i]]
         self.stickers = newStickers
 
     def solve(self):
         #Return a string with shortest possible solution
+        self.solution = []
         pass
+
+    def bestCross(self, cubes):
+        pass
+
 
 class Cube3D(object):
     #This object represents the Cube object in the VPython scene and controls it. the destroy() method should be called before a new Cube3D is created.
@@ -319,7 +342,8 @@ class Corner3D(Cubie3D):
         
 class Controller(object):
     def __init__(self): 
-        scene = canvas(background = color.white)
+        scene = canvas(background = color.gray(0.97))
+        scene.ambient=color.gray(0.7)
         self.cube3d = Cube3D()
         scene.bind('keydown',self.onKey)
         scene.bind('click',self.onClick)

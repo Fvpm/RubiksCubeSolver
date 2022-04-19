@@ -87,11 +87,18 @@ class Cube(object):
         #returns a new cube identical to this one
         newCube = Cube(self.stickers.copy(), self.solution.copy())
         return newCube
-                
+    
+    def moves(self,faces):
+        for move in faces:
+            self.move(move)
+
     def move(self,face):
         #Makes a move on the cube. 
         #Face should be one of 18 strings with base forms f, u, l, b, r, d and variations f, F, f2 for clockwise, counterclockwise, and double
         if face == None:
+            return
+        if face[0].lower() in ['x','y','z']:
+            self.wholeTurn(face)
             return
         moveMap = self.turnMaps[face]
         newStickers = self.stickers.copy()
@@ -129,10 +136,7 @@ class Cube(object):
         self.solution = []
         cubes = [self.copy()]
         cubesAfterCross = self.bestCross(cubes)
-        for cube in cubesAfterCross:
-            print(cube.solution)
-        cubesAfterF2L = self.bestF2L(cubesAfterCross)
-        print("----")
+        cubesAfterF2L = self.bestF2l(cubesAfterCross)
         for cube in cubesAfterF2L:
             print(cube.solution)
         
@@ -238,32 +242,225 @@ class Cube(object):
         outCubes = []
         for cube in inCubes:
             #For f2l im basically following a set of algorithms http://www.rubiksplace.com/speedcubing/F2L-algorithms/ here. I tend to favor shorter options with no axis rotations. I would just undo these axis rotations afterwards anyways.
+            #For the cases that are not included i am using accompanying pdf to fill in blanks
             #The algorithms assume we are filling the front right edge and that the needed corner piece is in that column. That means the corner piece will either be in the bottom right or can be found by rotating u several tims.
             while not cube.isF2lSolved():
+                if cube.downCrossSolved() == False:
+                    print("something has gone wrong")
+                    raise Exception("destructive moves in f2l")
+                print("nothing is happening")
+                
                 if cube.isFrontRightColSolved():
                     cube.wholeTurn('y')
                 else:#look for corner to insert
                     dfrCornerVals = [cube.stickers[10],cube.stickers[30],cube.stickers[36]]
                     dfrCornerVals.sort()
-                    if dfrCornerVals == ['d','f','r']: #corner is down. cases 25-30,37,41
-                        pass
-                        #TODO 25-30,37-41
-                    else: #corner is somewhere in the top. we have to get it in UFR
+                    if dfrCornerVals == ['d','f','r']: #corner is down. cases
+                        self.f2lReleaseEdge(cube)
+                        if cube.stickers[36] == 'f': #corner is correct but edge is messing:
+                            if cube.stickers[35] == 'r' and cube.stickers[31] == 'f': #Case 41
+                                for move in ['r','U','R','u','Y','R','u2','r','u2','R','u','r']:
+                                    cube.move(move)
+                                continue
+                            while not cube.isFRFaceMatch():
+                                print("edge should be on top 266")
+                                cube.move('u')
+                            if cube.stickers[33] == 'f' and cube.stickers[5] == 'r': #case 25
+                                for move in ['u','r','U','R','U','y','L','u','L']:
+                                    cube.move(move)
+                                continue
+                            if cube.stickers[25] == 'r' and cube.stickers[3] == 'f': #case 26
+                                for move in ['y','U','L','u','l','Y','u','r','U','R']:
+                                    cube.move(move)
+                                continue
+                            print("ERROR weird case 266")
+                        elif cube.stickers[36] == 'd': #white is in front
+                            if sorted([cube.stickers[x] for x in [35,31]]) == ['f','r']: #edge is in front
+                                if cube.stickers[35] == 'f': #case 37
+                                    cube.moves(['r','U','R','U','r','u','R','u2','r','U','R'])
+                                    continue
+                                else: #case 39
+                                    cube.moves(['Y','r2','F','U','f','u','r','U','r'])
+                                    continue
+                            else:#edge is on top
+                                while not cube.isFRFaceMatch():
+                                    print("edge should be on top 287")
+                                    cube.move('u')
+                                if cube.stickers[33] == 'f': #case 27
+                                    cube.moves(['Y','R','U','r','u','R','U','r'])
+                                    continue
+                                else: #case 29
+                                    cube.moves(['r','U','R','u','r','U','R'])
+                                    continue
+                        else: #white is on the right
+                            if sorted([cube.stickers[x] for x in [35,31]]) == ['f','r']:
+                                if cube.stickers[35] == 'f': #case 38
+                                    cube.moves(['r','u','R','u2','r','U','R','u','r','u','R'])
+                                    continue
+                                else: #case 40
+                                    cube.moves(['r','u','R','U','r','U','R','u2','Y','R','U','r'])
+                                    continue
+                                    
+                            else: #edge is on to
+                                while not cube.isFRFaceMatch():
+                                    cube.move('u')
+                                if cube.stickers[33] == 'f': #case 30
+                                    cube.moves(['Y','R','u','r','U','R','u','r'])
+                                    continue
+                                else: #case 28
+                                    cube.moves(['r','u','R','U','r','u','R'])
+                                    continue
+                    else: #corner is somewhere else. we have to get it in UFR
+                        if self.f2lReleaseCorner(cube):
+                            continue
+                            #continue should bring us back to the beginning of loop
                         while not cube.isDFRInUFR():
+                            print("corner should be on top 318")
                             cube.move('u')
+                        self.f2lReleaseEdge(cube)
+                        #corner is now in UFR
                         if cube.stickers[34] == 'r': #side colors are switched, white on top
-                            #TODO 17-24, 35,36
+                            #the tuples are in format (index of f, index of r, moves to execute)
+                                         #case 23
+                            locations = [( 5,33, ['u2','r2','u2','R','U','r','U','r2']),
+                                         #case 18
+                                         (33, 5, ['Y','R','u2','r','u','R','U','r']),
+                                         #case 21
+                                         ( 7,17, ['r','U','R','u2','r','u','R']),
+                                         #case 20
+                                         (17, 7, ['Y','U','R','u2','r','U','R','u','r']),
+                                         #case 19
+                                         ( 1,41, ['u','r','u2','R','u','r','U','R']),
+                                         #case 22
+                                         (41, 1, ['Y','R','u','r','u2','R','U','r']),
+                                         #case 17
+                                         ( 3,25, ['r','u2','R','U','r','u','R']),
+                                         #case 24
+                                         (25, 3, ['Y','u2','r2','u2','r','u','R','u','r2']),
+                                         #case 36
+                                         (35,31, ['r','u','R','U','r','u','R','U','r','u','R']),
+                                         #case 35
+                                         (31,35, ['r','U','R','Y','u','R','u','r'])]
+                            for location in locations:
+                                frontSpot = location[0]
+                                rightSpot = location[1]
+                                moves = location[2]
+                                if cube.stickers[frontSpot] == 'f' and cube.stickers[rightSpot] == 'r':
+                                    cube.moves(moves)
+                                    break
                         elif cube.stickers[34] == 'f': #front matches, white on right
+                                         #case 14        
+                            locations = [( 5,33, ['R','u2','r2','u','r2','u','r']),
+                                         #case 2
+                                         (33, 5, ['f','R','F','r']),
+                                         #case 12
+                                         ( 7,17, ['U','r','u','R','u','r','u','R']),
+                                         #case 4
+                                         (17, 7, ['Y','u','R','U','r','u2','R','u','r']),
+                                         #case 10
+                                         ( 1,41, ['r','u','R']),
+                                         #case 6
+                                         (41, 1, ['Y','u','R','u2','r','u2','R','u','r']),
+                                         #case 16
+                                         ( 3,25, ['U','r','U','R','u','r','u','R']),
+                                         #case 8
+                                         (25, 3, ['r','U','R','u2','Y','R','U','r']),
+                                         #case 32
+                                         (35,31, ['U','r','u2','R','u','r','u','R']),
+                                         #case 34
+                                         (31,35, ['y','u2','L','u','l','u','y','l','u','L',])]
+                            for location in locations:
+                                frontSpot = location[0]
+                                rightSpot = location[1]
+                                moves = location[2]
+                                if cube.stickers[frontSpot] == 'f' and cube.stickers[rightSpot] == 'r':
+                                    cube.moves(moves)
+                                    break
+                            pass
                             #TODO 2-16 Even, 32,34
-                        else: #right matches, white on left
-                        #TODO 1-15 Odd, 31,33
+                        elif cube.stickers[34] == 'd': #right matches, white on left
+                                         #case 7        
+                            locations = [( 5,33, ['y','L','u','l','u2','y','r','u','R']),
+                                         #case 15
+                                         (33, 5, ['Y','u','R','u','r','U','R','U','r']),
+                                         #case 5
+                                         ( 7,17, ['U','r','u2','R','u2','r','U','R']),
+                                         #case 9
+                                         (17, 7, ['Y','R','U','r']),
+                                         #case 3
+                                         ( 1,41, ['U','r','u','R','u2','r','U','R']),
+                                         #case 11
+                                         (41, 1, ['U','r','U','R','u','Y','R','U','r']),
+                                         #case 1
+                                         ( 3,25, ['u','r','U','R']),
+                                         #case 13
+                                         (25, 3, ['U','r','u2','R','Y','u','R','U','r']),
+                                         #case 31
+                                         (35,31, ['U','r','U','R','u2','r','U','R']),
+                                         #case 33
+                                         (31,35, ['U','r','u','R','Y','u','R','U','r'])]
+                            for location in locations:
+                                frontSpot = location[0]
+                                rightSpot = location[1]
+                                moves = location[2]
+                                if cube.stickers[frontSpot] == 'f' and cube.stickers[rightSpot] == 'r':
+                                    cube.moves(moves)
+                                    break
+                        else:
+                            print("ERROR i thought i covered all the cases 327")
+            cube.reduceSolution()
+            outCubes.append(cube)
+        return outCubes
 
 
-                pass
+    def isFRFaceMatch(self):
+        #Checks if FR is in either UF or UR WITH THE COLOR MATCH
+        if self.stickers[33] == 'f' and self.stickers[5] =='r':
+            return True
+        if self.stickers[25] == 'r' and self.stickers[3] == 'f':
+            return True
+        return False
+
+    def f2lReleaseCorner(self, cube):
+        #check if corner is in the bottom layer in the wrong column, and if so move it DFR. If an edge needs to be released as well, we cant accidentally put this corner in a wrong slot again.
+        if sorted([cube.stickers[x] for x in [38,8,20]]) == ['d','f','r']:#its in FL
+            for move in ['L','r','U','R','l']:
+                cube.move(move)
+            return True
+        if sorted([cube.stickers[x] for x in [22,44,14]]) == ['d','f','r']: #its in BL
+            for move in ['l','F','u2','f','L']:
+                cube.move(move)
+            return True
+        if sorted([cube.stickers[x] for x in [28,46,12]]) == ['d','f','r']: #its in BR
+            for move in ['b','F','u','f','B']:
+                cube.move(move)
+            return True
+        return False
+            
+            
+    def f2lReleaseEdge(self, cube):
+        #release the front right edge if its in one of the other equatorial edges
+        #first check if is actually in one of them
+        edgePairs = [(19,39),(23,43),(27,47)]
+        #if sorted([cube.stickers[19],cube.stickers[39]]) == ['f','r']:
+        if sorted([cube.stickers[x] for x in [19,39]]) == ['f','r']: #its in front left
+            for move in ['L','U','l','u']:
+                cube.move(move)
+            return True
+        if sorted([cube.stickers[x] for x in [23,43]]) == ['f','r']: #its in back left
+            for move in ['l','U','L','u']:
+                cube.move(move)
+            return True
+        if sorted([cube.stickers[x] for x in [27,43]]) == ['f','r']: #back right
+            for move in ['b','u','B','U']:
+                cube.move(move)
+            return True
+        return False
+
     def isDFRInUFR(self):
         cornerVals = [self.stickers[x] for x in [4,34,24]]
         cornerVals.sort
-        if cornerVals == ['d','f','r':
+        if cornerVals == ['d','f','r']:
             return True
         else:
             return False
@@ -290,7 +487,7 @@ class Cube(object):
         checks = [(8,16,'d'),(35,40,'f'),(19,24,'l'),(27,32,'r'),(43,48,'b')]
         for t in checks:
             num = t[1]-t[0]
-            if[self.stickers(x) for x in range(t[0],t[1])].count(t[2]) != num:
+            if[self.stickers[x] for x in range(t[0],t[1])].count(t[2]) != num:
                 return False
         return True
 

@@ -5,9 +5,9 @@ class Cube(object):
     #This class represents a rubik's cube as a simple 48-long list of 6 possible values. The class has the ability to make moves, mapping these values to different positions according to how a rubik's cube would move. The efficient moves make this class idea for implementation of a solving algorithm, which is it's purpose in the program. Because the Cube3D class cannot make moves quickly do to it's connection to vpython objects,
 
 
-    wholeTurnDict = { "x" : {'f':'u','u':'b','b':'d','d':'f','l':'l','r':'r'}, "X": {'f':'d','d':'b','b':'u','u':'f','l':'l','r':'r'},
-                      "y" : {'f':'l','l':'b','b':'r','r':'f','u':'u','d':'d'}, "Y": {'f':'r','r':'b','b':'l','l':'f','u':'u','d':'d'},
-                      "z" : {'u':'r','r':'d','d':'l','l':'u','f':'f','b':'b'}, "Z": {'u':'l','l':'d','d':'r','r':'u','f':'f','b':'b'}}
+    wholeTurnDict = { "x" : {'f':'u','u':'b','b':'d','d':'f','l':'l','r':'r'}, "X": {'f':'d','d':'b','b':'u','u':'f','l':'l','r':'r'}, "x2":{'f':'b','b':'f','u':'d','d':'u','l':'l','r':'r'},
+                      "y" : {'f':'l','l':'b','b':'r','r':'f','u':'u','d':'d'}, "Y": {'f':'r','r':'b','b':'l','l':'f','u':'u','d':'d'}, 'y2':{'f':'b','b':'f','u':'u','d':'d','l':'r','r':'l'},
+                      "z" : {'u':'r','r':'d','d':'l','l':'u','f':'f','b':'b'}, "Z": {'u':'l','l':'d','d':'r','r':'u','f':'f','b':'b'}, 'z2':{'f':'f','b':'b','u':'d','d':'u','l':'r','r':'l'}}
     wholeTurnMoveDict = { "x" : {0:44, 1:45, 2:46, 3:47,4:40,5:41,6:42,7:43,  8:32,9:33,10:34,11:35,12:36,13:37,14:38,15:39,
                                  16:22, 17:23,18:16,19:17,20:18,21:19,22:20,23:21,  24:26,25:27,26:28,27:29,28:30,29:31,30:24,31:25,
                                  32:0,33:1,34:2,35:3,36:4,37:5,38:6,39:7,  40:12, 41:13, 42:14, 43:15,44:8,45:9,46:10,47:11},
@@ -91,6 +91,8 @@ class Cube(object):
     def move(self,face):
         #Makes a move on the cube. 
         #Face should be one of 18 strings with base forms f, u, l, b, r, d and variations f, F, f2 for clockwise, counterclockwise, and double
+        if face == None:
+            return
         moveMap = self.turnMaps[face]
         newStickers = self.stickers.copy()
         for t in moveMap:
@@ -103,6 +105,8 @@ class Cube(object):
 
     def wholeTurn(self, axis):
         #axis should be in [x, X, y, Y, z, Z]
+        if axis == None:
+            return
         if axis not in ['x','X','y','Y','z','Z']:
             print("error 71 incorrect wholeTurn() input")
             return
@@ -123,14 +127,13 @@ class Cube(object):
     def solve(self):
         #Return a string with shortest possible solution
         self.solution = []
-        cubes = []
-        startMoves = ["y","y","y","x","y","y","y","X","y","y","y",'X','y','y','y','x','y','y','y','x','y','y','y']
-        cubes.append(self.copy())
-        for move in startMoves:
-            self.wholeTurn(move)
-            cubes.append(self.copy())
+        cubes = [self.copy()]
         cubesAfterCross = self.bestCross(cubes)
         for cube in cubesAfterCross:
+            print(cube.solution)
+        cubesAfterF2L = self.bestF2L(cubesAfterCross)
+        print("----")
+        for cube in cubesAfterF2L:
             print(cube.solution)
         
 
@@ -142,6 +145,13 @@ class Cube(object):
             nextReduce = self.reduceList(thisReduce)
         self.solution = thisReduce
 
+    def getCompLength(self):
+        count = 0
+        for move in self.solution:
+            if move[0].lower() not in ['x','y','z']:
+                count += 1
+        return count
+
     
     def reduceList(self, moveList): 
         i = 0
@@ -150,8 +160,8 @@ class Cube(object):
                          "y2xy2":["X"], "xX":[],"Xx":[],"xy2x":["x"], "xy2Z":["X","z"], "yy":["y2"], "Yxy2":["X","z"], "zYx":["Y",'x2'], "Yx2Y":['x2'],'xx2':['X'],
                          "Xx2":['x'],"XzX":['y','x2'],'ZXz':['y'],'Xzy2':['z','Y'],"XYx2":['x','y'],"YZy2":['x','y'],'Xzy':['z','y2'],'y2y':['Y'], 'uuu':['U'],
                          'xy2X':['z2'], 'z2Yx':['Y','X'], 'YXY':['z','x2'], 'x2x':['X'], 'XX':['x2'], 'YXy':['Z'], 'ZZ':['z2'],'YXz':['X'],'YxY':['Z','x2'],
-                         'YXy2':['Z','y'],'Yx2z':['Z','X'], 'x2X':['x'], 'xzX':['Y'], 'YY':["y2"], 'ZxZ':['y2','X'], 'Zxz':['Y'], 'XZx2':['z','Y'], 'Zxy':['x'],
-                         'Zxy2':['x','y']}
+                         'YXy2':['Z','y'],'Yx2z':['Z','X'], 'x2X':['x'], 'xzX':['Y'], 'YY':["y2"], 'ZxZ':['y','x2'], 'Zxz':['Y'], 'XZx2':['z','Y'], 'Zxy':['x'],
+                         'Zxy2':['x','y'], 'ZxY':['X','z2'],'Xz2X':['z2'], 'y2Xy':['Z','x'], 'YzY':['z2','X'], 'b2b':['B'], 'bbb':['B'], 'd2d':['D'], 'uu':['u2']}
         while(i < len(moveList)-2):
             a = moveList[i]
             b = moveList[i+1]
@@ -181,18 +191,127 @@ class Cube(object):
         elif i == len(moveList) - 1:
             newSolution.append(moveList[i])
         return newSolution
-    
 
+    def reduceAxes(self, moveList):
+        #ttakes a list of moves and returns the list of moves with no axes rotations (but with the same moves)
+        if len(moveList) == 0:
+            return moveList
+        i = len(moveList) - 1
+        while(i > 0):
+            if moveList[i][0].lower() in ['x','y','z']:
+                break
+            i -= 1
+        if i == 0 and moveList[0][0].lower() not in ['x','y','z']:
+            return moveList
+        axis = moveList[i]
+        if len(axis) == 2:
+            pass
+        elif axis.isupper():
+            axis = axis.lower()
+        else:
+            axis = axis.upper()
+        newList = []
+        for j in range(i):
+            newList.append(moveList[j])
+        for j in range(i+1,len(moveList)):
+            move = moveList[j]
+            isCounter = moveList[j][0].isupper()
+            isDouble = True if len(moveList[j]) == 2 else False
+            moveCore = move[0].lower()
+            newMoveCore = self.wholeTurnDict[axis][moveCore]
+            if isCounter:
+                newList.append(newMoveCore.upper())
+            elif isDouble:
+                newList.append(newMoveCore + "2")
+            else:
+                newList.append(newMoveCore)
+        return self.reduceAxes(newList)
+            
+    def bestF2l(self, cubes):
+        rotationGenerators = [None,"y","y","y"]
+        inCubes = []
+        #generate starting position rotations
+        for rotation in rotationGenerators:
+            for cube in cubes:
+                cube.wholeTurn(rotation)
+                inCubes.append(cube.copy())
+        outCubes = []
+        for cube in inCubes:
+            #For f2l im basically following a set of algorithms http://www.rubiksplace.com/speedcubing/F2L-algorithms/ here. I tend to favor shorter options with no axis rotations. I would just undo these axis rotations afterwards anyways.
+            #The algorithms assume we are filling the front right edge and that the needed corner piece is in that column. That means the corner piece will either be in the bottom right or can be found by rotating u several tims.
+            while not cube.isF2lSolved():
+                if cube.isFrontRightColSolved():
+                    cube.wholeTurn('y')
+                else:#look for corner to insert
+                    dfrCornerVals = [cube.stickers[10],cube.stickers[30],cube.stickers[36]]
+                    dfrCornerVals.sort()
+                    if dfrCornerVals == ['d','f','r']: #corner is down. cases 25-30,37,41
+                        pass
+                        #TODO 25-30,37-41
+                    else: #corner is somewhere in the top. we have to get it in UFR
+                        while not cube.isDFRInUFR():
+                            cube.move('u')
+                        if cube.stickers[34] == 'r': #side colors are switched, white on top
+                            #TODO 17-24, 35,36
+                        elif cube.stickers[34] == 'f': #front matches, white on right
+                            #TODO 2-16 Even, 32,34
+                        else: #right matches, white on left
+                        #TODO 1-15 Odd, 31,33
+
+
+                pass
+    def isDFRInUFR(self):
+        cornerVals = [self.stickers[x] for x in [4,34,24]]
+        cornerVals.sort
+        if cornerVals == ['d','f','r':
+            return True
+        else:
+            return False
+
+    def isFrontRightColSolved(self):
+        #simple one
+        if self.stickers[35] != 'f' or self.stickers[36] != 'f':
+            return False
+        if self.stickers[30] != 'r' or self.stickers[31] != 'r':
+            return False
+        if self.stickers[10] != 'd':
+            return False
+        return True
+
+
+    def isF2lSolved(self):
+        ##is bottom face solved
+        #if [self.stickers(x) for x in range(8,16)].count('d') != 8:
+        #    return False
+        ##is front face solved
+        #if [self.stickers(x) for x in range(35,40)].count('f') !=5:
+        #    return False
+        
+        checks = [(8,16,'d'),(35,40,'f'),(19,24,'l'),(27,32,'r'),(43,48,'b')]
+        for t in checks:
+            num = t[1]-t[0]
+            if[self.stickers(x) for x in range(t[0],t[1])].count(t[2]) != num:
+                return False
+        return True
 
     def bestCross(self, cubes):
-        for cube in cubes:
-            while(not cube.downCrossSolved()):
+        #Cubes is a list of cubes but it should happen to be length 1
+        oCube = cubes[0]
+        inCubes = []
+        startMoves = ["y","y","y","x","y","y","y","X","y","y","y",'X','y','y','y','x','y','y','y','x','y','y','y']
+        inCubes.append(oCube.copy())
+        for move in startMoves:
+            oCube.wholeTurn(move)
+            inCubes.append(oCube.copy())
+        outCubes = []
+        for cube in inCubes:
+            while(not cube.downCrossSolved()):#Checking if this is solved
                 if cube.dOnDownCross() == 4: #Whites are right and colors are wrong  (otherwise while loop wouldnt activate)
-                    while(cube.crossColorsRight() < 2):
+                    while(cube.crossColorsRight() < 2): #if whites are all on bottom, then you can rotate the bottom until 2 or 4 are in correct positions
                         cube.move('d')#
                     if(cube.crossColorsRight() == 4):
                         continue
-                    else:
+                    else:#After rotating the bottom, swap the 2 remaining incorrect facs
                         incorrectFaces = []
                         for (x,y) in [(37,'f'),(29,'r'),(45,'b'),(21,'l')]:
                             if cube.stickers[x] != y:
@@ -216,11 +335,10 @@ class Cube(object):
                                 cube.move('d')
                             cube.move(edgeMoves[edgeSpot])
             cube.reduceSolution()
-        return cubes
+            outCubes.append(cube)
+        #Add culling here later if desired
+        return outCubes
                             
-                    
-
-        pass
 
     def dOnDownCross(self) -> int:
         return [self.stickers[x] for x in [9,11,13,15]].count('d')

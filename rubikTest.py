@@ -1,6 +1,12 @@
 from vpython import *
 import random
 
+class CubeSolver(object):
+
+    @classmethod
+    def solve(cls, cube):
+        
+
 class Cube(object):
     #This class represents a rubik's cube as a simple 48-long list of 6 possible values. The class has the ability to make moves, mapping these values to different positions according to how a rubik's cube would move. The efficient moves make this class idea for implementation of a solving algorithm, which is it's purpose in the program. Because the Cube3D class cannot make moves quickly do to it's connection to vpython objects,
 
@@ -136,10 +142,9 @@ class Cube(object):
         self.solution = []
         cubes = [self.copy()]
         cubesAfterCross = self.bestCross(cubes)
-        cubesAfterF2L = self.bestF2l(cubesAfterCross)
-        for cube in cubesAfterF2L:
+        #cubesAfterF2L = self.bestF2l(cubesAfterCross)
+        for cube in cubesAfterCross:
             print(cube.solution)
-        
 
     def reduceSolution(self):
         thisReduce = self.solution
@@ -532,6 +537,7 @@ class Cube(object):
                                 cube.move('d')
                             cube.move(edgeMoves[edgeSpot])
             cube.reduceSolution()
+            cube.solution = self.reduceAxes(cube.solution)
             outCubes.append(cube)
         #Add culling here later if desired
         return outCubes

@@ -53,13 +53,13 @@ class Cube3D(object):
             if corner.getPosition() in cornerPositions:
                 rotatePieces.append(corner)
 
-        fps = 24
+        fps = 12
         for cubie in rotatePieces:
             cubie.updatePosition(face)
             if moveTwice:
                 cubie.updatePosition(face)
         for i in range(0, fps):
-            rate(fps*2)
+            rate(fps*3)
             for cubie in rotatePieces:
                 cubie.rotate(axis, angle/fps)
 
@@ -288,6 +288,7 @@ class Controller(object):
     def scramble(self):
         #Generates a scramble list and scrambles the current 3d cube.
         scrambleList = self.generateScramble()
+        print(scrambleList)
         for move in scrambleList:
             self.cube3d.rotate(move)
 
@@ -300,6 +301,8 @@ class Controller(object):
     def solve(self):
             cubeRepr = self.cube3d.toCube()
             solution = CubeSolver.solve(cubeRepr)
+            for move in solution:
+                self.cube3d.rotate(move)
             #generate and print solution
             pass
 

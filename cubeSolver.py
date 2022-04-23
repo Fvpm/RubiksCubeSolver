@@ -14,13 +14,24 @@ class CubeSolver(object):
         originalCube.solution = []
         cubes = [originalCube.copy()]
         cubesAfterCross = cls.bestCross(cubes)
-        cubesAfterF2L = cls.bestF2l(cubesAfterCross)
-        for cube in cubesAfterF2L:
-            print(cube.solution)
+        cubesAfterF2l = cls.bestF2l(cubesAfterCross)
+        print("-----")
+        shortest = cls.reduceAxes(cubesAfterF2l[0].solution)
+        for cube in cubesAfterF2l:
+            sol = cls.reduceAxes(cube.solution)
+            if len(sol) < len(shortest):
+                shortest = sol
+            print(sol)
+            #cube.prettyPrint()
+        print("-----")
+        print(f'shortest with len {len(shortest)} is:')
+        print(shortest)
+        return shortest
+
 
     @classmethod
     def bestF2l(cls, cubes):
-        rotationGenerators = [None]#,"y","y","y"]
+        rotationGenerators = [None,"y","y","y"]
         inCubes = []
         #generate starting position rotations
         for rotation in rotationGenerators:
@@ -33,10 +44,11 @@ class CubeSolver(object):
             #For the cases that are not included i am using accompanying pdf to fill in blanks
             #The algorithms assume we are filling the front right edge and that the needed corner piece is in that column. That means the corner piece will either be in the bottom right or can be found by rotating u several tims.
             while not cube.isF2lSolved():
+                #print(cube.solution)
+                #cube.prettyPrint()
                 if cube.downCrossSolved() == False:
                     print("something has gone wrong")
                     raise Exception("destructive moves in f2l")
-                print(cube.solution)
                 
                 if cube.isFrontRightColSolved():
                     cube.wholeTurn('y')
@@ -51,10 +63,9 @@ class CubeSolver(object):
                                     cube.move(move)
                                 continue
                             while not cube.isFRFaceMatch():
-                                print("edge should be on top 266")
                                 cube.move('u')
                             if cube.stickers[33] == 'f' and cube.stickers[5] == 'r': #case 25
-                                for move in ['u','r','U','R','U','y','L','u','L']:
+                                for move in ['u','r','U','R','U','y','L','u','l']:
                                     cube.move(move)
                                 continue
                             if cube.stickers[25] == 'r' and cube.stickers[3] == 'f': #case 26
@@ -72,7 +83,6 @@ class CubeSolver(object):
                                     continue
                             else:#edge is on top
                                 while not cube.isFRFaceMatch():
-                                    print("edge should be on top 287")
                                     cube.move('u')
                                 if cube.stickers[33] == 'f': #case 27
                                     cube.moves(['Y','R','U','r','u','R','U','r'])
@@ -106,6 +116,7 @@ class CubeSolver(object):
                         while not cube.isDFRInUFR():
                             if(count == 5):
                                 print("corner should be on top 318")
+                                cube.prettyPrint()
                                 raise Exception("Corner should be on top 318")
                                 exit()
                             cube.move('u')
@@ -200,6 +211,7 @@ class CubeSolver(object):
                         else:
                             print("ERROR i thought i covered all the cases 327")
             cube.reduceSolution()
+            #cube.solution = cls.reduceAxes(cube.solution)
             outCubes.append(cube)
         return outCubes
 
@@ -209,8 +221,7 @@ class CubeSolver(object):
         #Cubes is a list of cubes but it should happen to be length 1
         oCube = cubes[0]
         inCubes = []
-        startMoves = []#"y","y","y","x","y","y","y","X","y","y","y",'X','y','y','y','x','y','y','y','x','y','y','y']
-        print("210 one cube")
+        startMoves = ["y","y","y","x","y","y","y","X","y","y","y",'X','y','y','y','x','y','y','y','x','y','y','y']
         inCubes.append(oCube.copy())
         
         for move in startMoves:
@@ -248,7 +259,7 @@ class CubeSolver(object):
                                 cube.move('d')
                             cube.move(edgeMoves[edgeSpot])
             cube.reduceSolution()
-            cube.solution = cls.reduceAxes(cube.solution)
+            #cube.solution = cls.reduceAxes(cube.solution)
             outCubes.append(cube)
         #Add culling here later if desired
         return outCubes
@@ -320,7 +331,7 @@ class CubeSolver(object):
             for move in ['l','U','L','u']:
                 cube.move(move)
             return True
-        if sorted([cube.stickers[x] for x in [27,43]]) == ['f','r']: #back right
+        if sorted([cube.stickers[x] for x in [27,47]]) == ['f','r']: #back right
             for move in ['b','u','B','U']:
                 cube.move(move)
             return True

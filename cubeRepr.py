@@ -28,7 +28,9 @@ class Cube(object):
                      "Xx2":['x'],"XzX":['y','x2'],'ZXz':['y'],'Xzy2':['z','Y'],"XYx2":['x','y'],"YZy2":['x','y'],'Xzy':['z','y2'],'y2y':['Y'], 'uuu':['U'],
                      'xy2X':['z2'], 'z2Yx':['Y','X'], 'YXY':['z','x2'], 'x2x':['X'], 'XX':['x2'], 'YXy':['Z'], 'ZZ':['z2'],'YXz':['X'],'YxY':['Z','x2'],
                      'YXy2':['Z','y'],'Yx2z':['Z','X'], 'x2X':['x'], 'xzX':['Y'], 'YY':["y2"], 'ZxZ':['y','x2'], 'Zxz':['Y'], 'XZx2':['z','Y'], 'Zxy':['x'],
-                     'Zxy2':['x','y'], 'ZxY':['X','z2'],'Xz2X':['z2'], 'y2Xy':['Z','x'], 'YzY':['z2','X'], 'b2b':['B'], 'bbb':['B'], 'd2d':['D'], 'uu':['u2']}
+                     'Zxy2':['x','y'], 'ZxY':['X','z2'],'Xz2X':['z2'], 'y2Xy':['Z','x'], 'YzY':['z2','X'], 'b2b':['B'], 'bbb':['B'], 'd2d':['D'], 'uu':['u2'],
+                     'Ll':[],'uU':[],'UU':['u2']}
+
                          
 
     edgePairs = { 1:41, 3:25, 5:33, 7:17, 9:37, 11:29, 13:45, 15:21, 17: 7, 19:39, 21:15, 23:43, 25:3, 27: 47, 29:11, 31:35, 33:5, 35:31, 37:9, 39:19, 41:1, 43:23, 45:13, 47:27}
@@ -200,7 +202,7 @@ class Cube(object):
 
     def isDFRInUFR(self):
         cornerVals = [self.stickers[x] for x in [4,34,24]]
-        cornerVals.sort
+        cornerVals.sort()
         if cornerVals == ['d','f','r']:
             return True
         else:
@@ -249,6 +251,29 @@ class Cube(object):
         return True
         
     def prettyPrint(self):
+        print("    ", end = '')
+        self.printSpots([0,1,2])
+        print("    ", end = '')
+        self.printSpots([7,'u',3])
+        print("    ", end = '')
+        self.printSpots([6,5,4])
+        self.printSpots([16,17,18,' ',32,33,34,' ',24,25,26,' ',40,41,42])
+        self.printSpots([23,'l',19,' ',39,'f',35,' ',31,'r',27,' ',47,'b',43])
+        self.printSpots([22,21,20,' ',38,37,36,' ',30,29,28,' ',46,45,44])
+        print("    ", end ='')
+        self.printSpots([8,9,10])
+        print("    ", end ='')
+        self.printSpots([15,'d',11])
+        print("    ", end ='')
+        self.printSpots([14,13,12])
+        print("")
+
+    def printSpots(self, spots):
+        #Helper function for pretty print
         s = self.stickers
-        print("   ", end = '')
-        print('{s[')
+        for pos in spots:
+            if type(pos) is str:
+                print(pos, end = '')
+            else:
+                print(f'{s[pos]}',end = '')
+        print("")

@@ -2,9 +2,14 @@
 class Cube(object):
     #This class represents a rubik's cube as a simple 48-long list of 6 possible values. The class has the ability to make moves, mapping these values to different positions according to how a rubik's cube would move. The efficient moves make this class idea for implementation of a solving algorithm, which is it's purpose in the program. Because the Cube3D class cannot make moves quickly do to it's connection to vpython objects,
 
+    wideDict = {'l':['X','r'], 'L':['x','R'], 'r':['x','l'], 'R':['X','L'],
+                'd':['Y','u'], 'D':['y','U'], 'u':['y','d'], 'U':['Y','D'],
+                'b':['Z','f'], 'B':['z','F'], 'f':['z','b'], 'F':['Z','B']}
+
     wholeTurnDict = { "x" : {'f':'u','u':'b','b':'d','d':'f','l':'l','r':'r'}, "X": {'f':'d','d':'b','b':'u','u':'f','l':'l','r':'r'}, "x2":{'f':'b','b':'f','u':'d','d':'u','l':'l','r':'r'},
                       "y" : {'f':'l','l':'b','b':'r','r':'f','u':'u','d':'d'}, "Y": {'f':'r','r':'b','b':'l','l':'f','u':'u','d':'d'}, 'y2':{'f':'b','b':'f','u':'u','d':'d','l':'r','r':'l'},
                       "z" : {'u':'r','r':'d','d':'l','l':'u','f':'f','b':'b'}, "Z": {'u':'l','l':'d','d':'r','r':'u','f':'f','b':'b'}, 'z2':{'f':'f','b':'b','u':'d','d':'u','l':'r','r':'l'}}
+
     wholeTurnMoveDict = { "x" : {0:44, 1:45, 2:46, 3:47,4:40,5:41,6:42,7:43,  8:32,9:33,10:34,11:35,12:36,13:37,14:38,15:39,
                                  16:22, 17:23,18:16,19:17,20:18,21:19,22:20,23:21,  24:26,25:27,26:28,27:29,28:30,29:31,30:24,31:25,
                                  32:0,33:1,34:2,35:3,36:4,37:5,38:6,39:7,  40:12, 41:13, 42:14, 43:15,44:8,45:9,46:10,47:11},
@@ -14,6 +19,7 @@ class Cube(object):
                           "z" : {0:26,1:27,2:28,3:29,4:30,5:31,6:24,7:25,  8:18,9:19,10:20,11:21,12:22,13:23,14:16,15:17,
                                  16:2, 17:3,18:4,19:5,20:6,21:7,22:0,23:1, 24:10, 25:11,26:12,27:13,28:14,29:15,30:8,31:9,
                                  32:34,33:35,34:36,35:37,36:38,37:39,38:32,39:33,  40:46,41:47,42:40,43:41,44:42,45:43,46:44,47:45}}
+
     newEntries = dict()
     for k,v in wholeTurnMoveDict.items():
         newKey = k.upper()
@@ -29,9 +35,7 @@ class Cube(object):
                      'xy2X':['z2'], 'z2Yx':['Y','X'], 'YXY':['z','x2'], 'x2x':['X'], 'XX':['x2'], 'YXy':['Z'], 'ZZ':['z2'],'YXz':['X'],'YxY':['Z','x2'],
                      'YXy2':['Z','y'],'Yx2z':['Z','X'], 'x2X':['x'], 'xzX':['Y'], 'YY':["y2"], 'ZxZ':['y','x2'], 'Zxz':['Y'], 'XZx2':['z','Y'], 'Zxy':['x'],
                      'Zxy2':['x','y'], 'ZxY':['X','z2'],'Xz2X':['z2'], 'y2Xy':['Z','x'], 'YzY':['z2','X'], 'b2b':['B'], 'bbb':['B'], 'd2d':['D'], 'uu':['u2'],
-                     'Ll':[],'uU':[],'UU':['u2']}
-
-                         
+                     'Ll':[],'uU':[],'UU':['u2'], 'uu':['u2'], 'fF':[], 'Uu2':['u']}
 
     edgePairs = { 1:41, 3:25, 5:33, 7:17, 9:37, 11:29, 13:45, 15:21, 17: 7, 19:39, 21:15, 23:43, 25:3, 27: 47, 29:11, 31:35, 33:5, 35:31, 37:9, 39:19, 41:1, 43:23, 45:13, 47:27}
     turnMaps = {'u':[(0,2),(2,4),(4,6),(6,0),(1,3),(3,5),(5,7),(7,1),
@@ -64,9 +68,6 @@ class Cube(object):
     turnMaps.update(doubleTurns)
     turnMaps.update(reverseMaps)
     
-
-
-
     def __init__(self, _stickers = None, _solution = []):
         #Creates a new cube with position set by creator.
         #_stickers should be an array of length 48 containing 8 instances of each face value
@@ -87,7 +88,13 @@ class Cube(object):
         for face in ['f','b','l','r','u','d']:
             if self.stickers.count(face) != 8:
                 return False
-
+        return True
+    
+    def isSolved(self):
+        faces = ['u','d','l','r','f','b']
+        for i in range(48):
+            if self.stickers[i] != faces[i//8]:
+                return False
         return True
 
     def copy(self):
@@ -107,6 +114,10 @@ class Cube(object):
         if face[0].lower() in ['x','y','z']:
             self.wholeTurn(face)
             return
+        if len(face) == 2 and face[1] == 'w':
+            moves = self.wideDict[face[0]]
+            self.moves(moves)
+            return
         moveMap = self.turnMaps[face]
         newStickers = self.stickers.copy()
         for t in moveMap:
@@ -120,6 +131,10 @@ class Cube(object):
     def wholeTurn(self, axis):
         #axis should be in [x, X, y, Y, z, Z]
         if axis == None:
+            return
+        if len(axis) == 2:
+            self.wholeTurn(axis[0])
+            self.wholeTurn(axis[0])
             return
         if axis not in ['x','X','y','Y','z','Z']:
             print("error 71 incorrect wholeTurn() input")
@@ -154,7 +169,6 @@ class Cube(object):
                 count += 1
         return count
 
-    
     def reduceList(self, moveList): 
         i = 0
         newSolution = []
@@ -188,6 +202,56 @@ class Cube(object):
             newSolution.append(moveList[i])
         return newSolution
 
+ #  def oCheck(self, orientations) -> bool:
+ #      #returns true if top orientations match input array
+ #      #input array should be of length 8 where the first 4 values are 0 or 1 and the second 4 are 0 1 or 2. Iterate clockwise starting with UF and then UFL
+ #      ori = orientations
+ #      s = self.stickers
+ #      edgeTops = [5,7,1,3]
+ #      for i in range(4):
+ #          if ori[i] == 0 and s[edgeTops[i]] != 'u':
+ #              return False
+ #          elif ori[i] == 1 and s[edgeTops[i]] == 'u':
+ #              return False
+ #      cornerOris = [[6,0,2,4],[32,16,40,24],[18,42,26,34]]
+ #      for i in range(4,8):
+ #          if s[cornerOris[ori[i]][i-4]] != 'u':
+ #              return False
+ #      return True
+    
+    def getOList(self):
+        edgeTops = [5,7,1,3]
+        cornerOris = [[6,0,2,4],[32,16,40,24],[18,42,26,34]]
+        outList = [4] * 8
+        s = self.stickers
+        for i in range(4):
+            outList[i] = 0 if s[edgeTops[i]] == 'u' else 1
+        for i in range(4,8):
+            for j in range(3):
+                if s[cornerOris[j][i-4]] == 'u':
+                    outList[i] = j
+                    break
+        if 4 in outList:
+            self.prettyPrint()
+            print(outList)
+            raise Exception("getOList failure")
+            exit()
+        return outList
+    
+    def getPString(self):
+        outStr = ""
+        for i in [34,33,32,18,17,16,42,41,40,26,25,24]:
+            outStr = outStr  + self.stickers[i]
+        return outStr
+            
+
+    def isOLLSolved(self):
+        s = self.stickers
+        for i in range(8):
+            if s[i] != 'u':
+                return False
+        return True
+            
             
 
     def isFRFaceMatch(self):

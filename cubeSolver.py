@@ -7,6 +7,95 @@ class CubeSolver(object):
     wholeTurnDict = { "x" : {'f':'u','u':'b','b':'d','d':'f','l':'l','r':'r'}, "X": {'f':'d','d':'b','b':'u','u':'f','l':'l','r':'r'}, "x2":{'f':'b','b':'f','u':'d','d':'u','l':'l','r':'r'},
                       "y" : {'f':'l','l':'b','b':'r','r':'f','u':'u','d':'d'}, "Y": {'f':'r','r':'b','b':'l','l':'f','u':'u','d':'d'}, 'y2':{'f':'b','b':'f','u':'u','d':'d','l':'r','r':'l'},
                       "z" : {'u':'r','r':'d','d':'l','l':'u','f':'f','b':'b'}, "Z": {'u':'l','l':'d','d':'r','r':'u','f':'f','b':'b'}, 'z2':{'f':'f','b':'b','u':'d','d':'u','l':'r','r':'l'}}
+    #oll algorithms should be in standard CFOP orer
+    ollMap = [ ([1,1,1,1,2,1,2,1], ['r','u','B','r','b','r2','U','R','f','r','F']),
+               ([1,1,1,1,2,1,1,2], ['y','y','f','R','F','r','u','r2','B','R','b','U','R']),
+               ([1,1,1,1,2,2,2,0], ['y','Rw','r2','u','R','u','rw','u2','Rw','u','R','rw']),
+               ([1,1,1,1,1,1,0,1], ['y','Rw','r','U','rw','u2','Rw','U','r','U','r2','rw']),
+               ([0,1,1,0,2,2,2,0], ['Rw','u2','r','u','R','u','rw']), #5
+               ([0,0,1,1,0,1,1,1], ['y2','rw','u2','R','U','r','U','Rw']),
+               ([1,0,0,1,0,2,2,2], ['rw','u','R','u','r','u2','Rw']),
+               ([1,1,0,0,1,1,1,0], ['Lw','U','l','U','L','u2','lw']),
+               ([1,1,0,0,0,1,1,1], ['Y','R','U','r','y','rw','U','Rw','u','rw','u','Rw']),
+               ([1,0,0,1,2,2,2,0], ['Y','r','u','R','y','R','f','r','U','R','F','r']), #10
+               ([0,0,1,1,2,0,2,2], ['y','rw','u','R','u','R','f','r','F','r','u2','Rw']),
+               ([0,1,1,0,1,1,0,1], ['y','f','r','u','r2','f','r','Y','r2','u','r','u2','R']),
+               ([1,0,1,0,0,2,2,2], ['f','u','r','u2','R','U','r','u','R','F']),
+               ([1,0,1,0,1,1,1,0], ['R','f','r','u','R','F','r','f','U','F']),
+               ([1,0,1,0,2,2,2,0], ['y2','R','F','r','L','U','l','u','R','f','r']), #15
+               ([1,0,1,0,0,1,1,1], ['y2','rw','u','Rw','r','u','R','U','rw','U','Rw']),
+               ([1,1,1,1,2,0,1,0], ['F','r','u2','Rw','u','f2','U','rw','u2','R','f']),
+               ([1,1,1,1,2,1,0,0], ['y','f','r','u','R','dw','R','u2','R','f','r','F']),
+               ([1,1,1,1,2,0,0,1], ['R','u2','f','r','u','R','U','Y','r2','u2','r','b']),
+               ([1,1,1,1,0,0,0,0], ['r','b','u','B','R','f2','b','D','L','d','B','f2']), #20
+               ([0,0,0,0,2,1,2,1], ['r','u','R','u','r','U','R','u','r','u2','R']),
+               ([0,0,0,0,2,1,1,2], ['r','u2','r2','U','r2','U','r2','u2','r']),
+               ([0,0,0,0,0,2,1,0], ['r2','D','r','u2','R','d','r','u2','r']),
+               ([0,0,0,0,1,2,0,0], ['l','f','R','F','L','f','r','F']),
+               ([0,0,0,0,2,0,1,0], ['R','F','L','f','r','F','l','f']), #25
+               ([0,0,0,0,1,1,1,0], ['y2','R','U','r','U','R','u2','r']),
+               ([0,0,0,0,0,2,2,2], ['r','u','R','u','r','u2','R']),
+               ([1,0,0,1,0,0,0,0], ['rw','u','R','U','Rw','r','u','r','U','R']),
+               ([0,0,1,1,2,0,0,1], ['X','U','R','u','L','U','r2','U','R','u2','rw']),
+               ([0,1,1,0,2,0,0,1], ['y2','F','l','u','l2','u','l2','u2','L','u','f']), #30
+               ([0,0,1,1,0,0,1,2], ['y2','R','U','f','u','r','U','R','F','r']),
+               ([0,1,1,0,1,2,0,0], ['r','u','B','U','R','u','r','b','R']),
+               ([1,0,1,0,1,2,0,0], ['r','u','R','U','R','f','r','F']),
+               ([1,0,1,0,0,1,2,0], ['r','u','R','Dw','Lw','U','l','u','Rw','r']),
+               ([0,1,1,0,1,0,2,0], ['r','u2','r2','f','r','F','r','u2','R']), #35
+               ([0,0,1,1,1,0,2,0], ['r','u','R','U','F','u2','f','u','r','u','R']),
+               ([0,0,1,1,0,2,0,1], ['y','R','f','r','F','U','F','u','f']),
+               ([0,1,1,0,0,1,0,2], ['y2','r','u','R','u','r','U','R','U','R','f','r','F']), #says optimal 10 this is 12
+               ([1,0,1,0,0,2,0,1], ['l','F','L','U','l','u','f','U','L']),
+               ([1,0,1,0,2,0,1,0], ['R','f','r','u','R','U','F','u','r']), #40
+               ([0,1,1,0,1,0,0,2], ['y2','r2','l','Z','Lw','U','r','dw','l','U','l','Lw']),
+               ([0,0,1,1,1,0,0,2], ['y2','l2','R','z','rw','u','L','Dw','R','u','R','rw']),
+               ([0,0,1,1,0,0,2,1], ['Fw','L','U','l','u','fw']),
+               ([0,1,1,0,2,1,0,0], ['y2','f','u','r','U','R','F']),
+               ([1,0,1,0,2,1,0,0], ['f','r','u','R','U','F']), #45
+               ([0,1,0,1,0,0,2,1], ['R','U','R','f','r','F','u','r']),
+               ([1,1,0,0,1,2,2,1], ['F','L','U','l','u','L','U','l','u','f']),
+               ([1,0,0,1,2,1,1,2], ['f','r','u','R','U','r','u','R','U','F']),
+               ([0,0,1,1,1,2,2,1], ['r','B','r2','f','r2','b','r2','F','r']),
+               ([0,1,1,0,2,1,1,2], ['y2','R','f','r2','B','r2','F','r2','b','R']), #50
+               ([1,0,1,0,1,2,2,1], ['f','u','r','U','R','u','r','U','R','F']),
+               ([0,1,0,1,1,2,2,1], ['R','U','r','U','R','dw','R','u','r','b']),
+               ([1,0,0,1,2,1,2,1], ['Lw','U','l','U','L','u','l','U','L','u2','lw']),
+               ([1,1,0,0,2,1,2,1], ['y2','f','R','F','r','u2','f2','l','f','L','f']),
+               ([0,1,0,1,2,1,2,1], ['r','u2','r2','U','r','U','R','u2','f','r','F']), #55
+               ([1,0,1,0,2,1,2,1], ['f','r','u','R','U','r','F','rw','u','R','U','Rw']),
+               ([1,0,1,0,0,0,0,0], ['r','u','R','U','rw','R','u','r','U','Rw']) ]
+
+                #string encoding is 34 33 32 18 17 16 42 41 40 26 25 24
+    pllMap = [ ('fbflrlbfbrlr', ['l','r','u2','L','R','F','B','u2','f','b']), #H perm
+               ('ffflrlblbrbr', ['y2','f2','U','l','R','f2','L','r','U','f2']), #U Perm
+               ('ffflblbrbrlr', ['y2','f2','u','x','R','l','u2','X','r','L','u','f2']), #b
+               ('frflblblbrfr', ['x2','r2','l2','u','x2','r2','l2','u','x2','r2','l2','f2','x2','r2','l2','f2','u2']), #z perm
+               ('bffllbrbrfrl', ['x','R','u','R','d2','r','U','R','d2','r2']), #A Perm
+               ('rfrfllbbflrb', ['x','r','D','r','u2','R','d','r','u2','r2']),
+               ('lfrflbrblbrf', ['x','u','R','U','l','u','r','U','rw','rw','U','r','u','l','U','R','u','x']), #E perm
+               ('ffflrbrblblr', ['R','u','r','U','r2','F','U','f','u','r','f','R','F','r2','U']), #F perm
+               ('lblbfrflbrrf', ['y','r2','uw','R','u','R','U','r','Uw','r2','Y','R','u','r']), #G perm
+               ('blrfbflfbrrl', ['y','F','U','f','r2','uw','R','u','r','U','r','Uw','r2']),
+               ('rbrfllbrflfb', ['y','r2','Uw','r','U','r','u','R','uw','r2','b','U','B']),
+               ('lrbrllbfrfbf', ['y2','r','u','R','Y','r2','Uw','r','U','R','u','R','uw','r2']),
+               ('fllbfflbbrrr', ['y2','x','r2','f','r','F','r','u2','Rw','u','rw','u2']), #J perm
+               ('rrflllbbrffb', ['y2','f2','r','u','R','f2','l','D','l','d','l2']),
+               ('ffbrrlbbfllr', ['r','U','l','u2','R','u','L'] * 2), #N perm
+               ('bfflrrfbbrll', ['z'] + ['U','r','D','r2','u','R','d'] * 2 + ['Z']),
+               ('lfrfllbrbrbf', ['r','u2','R','u2','r','B','R','U','r','u','r','b','r2','u']), #R Perm
+               ('frfllbrblbfr', ['Z','U','l2','u','l2','U','f','u','l','U','L','U','F','u2','z']),
+               ('rfflrlbbrflb', ['r','u','R','U','R','f','r2','U','R','U','r','u','R','F']), # T Perm
+               ('bffllrfrbrbl', ['R','u','R','U','y','R','F','r2','U','R','u','R','f','r','f']), #V perm
+               ('bfflbrflbrrl', ['r2','U','R','u','r','U','x','D','R','u','R','U','R','d','r'])] #y perm
+
+
+
+    
+
+
+
+
 
     @classmethod
     def solve(cls, originalCube):
@@ -15,9 +104,11 @@ class CubeSolver(object):
         cubes = [originalCube.copy()]
         cubesAfterCross = cls.bestCross(cubes)
         cubesAfterF2l = cls.bestF2l(cubesAfterCross)
+        cubesAfterOLL = cls.bestOLL(cubesAfterF2l)
+        solvedCubes = cls.bestPLL(cubesAfterOLL)
         print("-----")
-        shortest = cls.reduceAxes(cubesAfterF2l[0].solution)
-        for cube in cubesAfterF2l:
+        shortest = cls.reduceAxes(solvedCubes[0].solution)
+        for cube in solvedCubes:
             sol = cls.reduceAxes(cube.solution)
             if len(sol) < len(shortest):
                 shortest = sol
@@ -27,6 +118,58 @@ class CubeSolver(object):
         print(f'shortest with len {len(shortest)} is:')
         print(shortest)
         return shortest
+
+    @classmethod
+    def bestPLL(cls, cubes):
+        outCubes = []
+        for cube in cubes:
+            count = 0
+            while cube.isSolved() == False:
+                cube.move('u')
+                for i in range(4):
+                    pStr = cube.getPString()
+                    for combo in cls.pllMap:
+                        if pStr == combo[0]:
+                            cube.moves(combo[1])
+                            break
+                    cube.move('y')
+                count += 1
+                if count == 8:
+                    cube.prettyPrint()
+                    raise Exception("no PLL case match, cases should be complete.")
+                    exit()
+            cube.reduceSolution()
+            outCubes.append(cube)
+        return outCubes
+        
+
+    @classmethod
+    def bestOLL(cls, cubes):
+        outCubes = []
+        for cube in cubes:
+            count = 0
+            while cube.isOLLSolved() == False:
+                cube.move('y')
+                oList = cube.getOList()
+                for combo in cls.ollMap:
+                    if oList == combo[0]:
+                        for move in combo[1]:
+                            cube.move(move)
+                        if cube.isOLLSolved() == False:
+                            print(combo)
+                            cube.prettyPrint()
+                            raise Exception("Move error on OLL")
+                            exit()
+                        break
+                count += 1
+                if count == 5:
+                    print("ERROR no OLL case match. Cases should be complete.")
+                    cube.prettyPrint()
+                    raise Exception("no OLL case match. cases should be complete.")
+                    exit()
+            cube.reduceSolution()
+            outCubes.append(cube)
+        return outCubes
 
 
     @classmethod

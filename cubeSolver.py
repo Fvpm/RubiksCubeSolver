@@ -109,10 +109,12 @@ class CubeSolver(object):
         print("-----")
         shortest = cls.reduceAxes(solvedCubes[0].solution)
         for cube in solvedCubes:
-            sol = cls.reduceAxes(cube.solution)
+            cube.solution = cls.reduceAxes(cube.solution)
+            cube.reduceSolution()
+            sol = cube.solution
             if len(sol) < len(shortest):
                 shortest = sol
-            print(sol)
+            #print(sol)
             #cube.prettyPrint()
         print("-----")
         print(f'shortest with len {len(shortest)} is:')

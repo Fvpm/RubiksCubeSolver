@@ -35,7 +35,7 @@ class Cube(object):
                      'xy2X':['z2'], 'z2Yx':['Y','X'], 'YXY':['z','x2'], 'x2x':['X'], 'XX':['x2'], 'YXy':['Z'], 'ZZ':['z2'],'YXz':['X'],'YxY':['Z','x2'],
                      'YXy2':['Z','y'],'Yx2z':['Z','X'], 'x2X':['x'], 'xzX':['Y'], 'YY':["y2"], 'ZxZ':['y','x2'], 'Zxz':['Y'], 'XZx2':['z','Y'], 'Zxy':['x'],
                      'Zxy2':['x','y'], 'ZxY':['X','z2'],'Xz2X':['z2'], 'y2Xy':['Z','x'], 'YzY':['z2','X'], 'b2b':['B'], 'bbb':['B'], 'd2d':['D'], 'uu':['u2'],
-                     'Ll':[],'uU':[],'UU':['u2'], 'uu':['u2'], 'fF':[], 'Uu2':['u']}
+                     'Ll':[],'uU':[],'UU':['u2'], 'uu':['u2'], 'fF':[], 'Uu2':['u'], 'DD':['d2'], 'Ff':[], 'u2U':['u']}
 
     edgePairs = { 1:41, 3:25, 5:33, 7:17, 9:37, 11:29, 13:45, 15:21, 17: 7, 19:39, 21:15, 23:43, 25:3, 27: 47, 29:11, 31:35, 33:5, 35:31, 37:9, 39:19, 41:1, 43:23, 45:13, 47:27}
     turnMaps = {'u':[(0,2),(2,4),(4,6),(6,0),(1,3),(3,5),(5,7),(7,1),
@@ -161,6 +161,7 @@ class Cube(object):
             thisReduce = nextReduce
             nextReduce = self.reduceList(thisReduce)
         self.solution = thisReduce
+
 
     def getCompLength(self):
         count = 0

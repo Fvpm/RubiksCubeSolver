@@ -269,6 +269,9 @@ class Controller(object):
         scene.bind('mouseup',self.onMouseUp)
         scene.bind('mousemove',self.onMouseMove)
         self.cubeRepr = Cube()
+        button(bind=self.reset, text="New cube")
+        button(bind=self.scramble, text = "Scramble")
+        button(bind=self.solve, text = "Solve")
 
     def generateScramble(self, length = 30):
         #Generates a scramble of max length length and returns a list of appropriate moves. Capitalized moves are counterclockwise turns.

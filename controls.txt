@@ -1,0 +1,13 @@
+Launch using rubik.py
+
+To move any face clockwise:
+U - up
+D - down
+L - left
+R - right
+F - front
+B - back
+hold shift to turn counterclockwise.
+right click and drag to rotate view of cube
+
+click buttons to reset, scramble, and generate cube.

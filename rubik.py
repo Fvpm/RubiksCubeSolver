@@ -12,8 +12,11 @@ class Cube3D(object):
     axisDict = { 'u':vector(0,-1,0), 'l':vector(1,0,0), 'f': vector(0,0,-1), 'd':vector(0,1,0), 'r':vector(-1,0,0), 'b':vector(0,0,1) }
 
     
-    def __init__(self):
-        self.colors = [color.white, color.red, color.green, color.orange, color.blue, color.yellow]
+    def __init__(self, colors = None):
+        if colors:
+            self.colors = colors
+        else:
+            self.colors = [color.white, color.red, color.green, color.orange, color.blue, color.yellow]
         self.centers = []
         self.edges = []
         self.corners = []
@@ -24,6 +27,14 @@ class Cube3D(object):
             self.edges.append(Edge3D(i,self.colors))
         for i in range(0,8):
             self.corners.append(Corner3D(i,self.colors))
+
+    def updateStickerColor(self, vbox, newFace):
+        theCubie = None
+        for cubie in self.centers + self.edges + self.corners:
+            if vbox in cubie.stickers:
+                theCubie = cubie
+                break
+        theCubie.updateStickerColor(vbox, newFace[0])
 
 
     def rotate(self, face):
@@ -144,16 +155,31 @@ class Center3D(Cubie3D):
         #0U 1F 2L 3B 4R 5D
         super().__init__(position)
         basePos = self.positionDict[position]
+        self.colorVals = colors
         self.colors = [position]
         self.base = box(pos = basePos, size = vector(0.95,0.95,0.95),  color = color.black)
         sticker = box(pos = basePos * 1.5, size = vector(0.9, 0.05, 0.9), color = colors[position], up = basePos)
         self.stickers.append(sticker)
+
+    def updateStickerColor(self, vbox, face):
+        #input vbox, "f"
+        sideIndex = {'u':0,'f':1,'l':2,'b':3,'r':4,'d':5}[face]
+        index = 0
+        while True:
+            if self.stickers[index] == vbox:
+                break
+            index += 1
+        vbox.color = self.colorVals[sideIndex]
+        self.colors[index] = sideIndex
+
 
     def updatePosition(self, move):
         #Updates the cubie based off the move applied to it
         if move in ['f','u','d','b','l','r']:
             return
         #TODO add full cube rotations
+
+
 
 class Edge3D(Cubie3D):
 
@@ -176,23 +202,35 @@ class Edge3D(Cubie3D):
     edgeUpdateMap = dict(counterUpdates)
     edgeUpdateMap.update(clockwiseUpdates)
 
+
     def __init__(self, position, colors):
         #0UF 1UL 2UB 3 UR 4FL 5BL 6BR 7FR 8DF 9DF 10DB 11DR
         super().__init__(position)
         self.orientation = 0
-        
-
 
         faces = self.stickerInfoDict[position]
         basePos = self.vectorDict[faces[0]] + self.vectorDict[faces[1]] 
 
-        self.colors = faces
+        self.colorVals = colors
+        self.colors = faces.copy()
         self.base = box(pos = basePos, size = vector(0.95,0.95,0.95), color = color.black)
 
         for faceNum in faces:
             facePos = self.vectorDict[faceNum] * 0.5 + basePos
             newSticker = box(pos = facePos, up = self.vectorDict[faceNum], size = vector(0.9, 0.05, 0.9), color = colors[faceNum])
             self.stickers.append(newSticker)
+
+
+    def updateStickerColor(self, vbox, face):
+        #input vbox, "f"
+        sideIndex = {'u':0,'f':1,'l':2,'b':3,'r':4,'d':5}[face]
+        index = 0
+        while True:
+            if self.stickers[index] == vbox:
+                break
+            index += 1
+        vbox.color = self.colorVals[sideIndex]
+        self.colors[index] = sideIndex
 
 
 
@@ -241,7 +279,8 @@ class Corner3D(Cubie3D):
         faces = self.faceInfoDict[position]
         basePos = self.vectorDict[faces[0]] + self.vectorDict[faces[1]] + self.vectorDict[faces[2]]
 
-        self.colors = faces
+        self.colorVals = colors
+        self.colors = faces.copy()
         self.base = box(pos = basePos, size = vector(0.95,0.95,0.95), color = color.black)
 
         for faceNum in faces:
@@ -249,6 +288,17 @@ class Corner3D(Cubie3D):
             newSticker = box(pos = facePos, up = self.vectorDict[faceNum], size = vector(0.9, 0.05, 0.9), color = colors[faceNum])
             self.stickers.append(newSticker)
 
+    def updateStickerColor(self, vbox, face):
+        #input vbox, "f"
+        sideIndex = {'u':0,'f':1,'l':2,'b':3,'r':4,'d':5}[face]
+        index = 0
+        while True:
+            if self.stickers[index] == vbox:
+                break
+            index += 1
+        vbox.color = self.colorVals[sideIndex]
+        self.colors[index] = sideIndex
+            
     def updatePosition(self,face):
         if len(face) == 1 and face.lower() in ['l','r','f','b']:
             self.orientation += self.orientationAdditions[face.lower()][self.position] % 3
@@ -257,21 +307,46 @@ class Corner3D(Cubie3D):
     def getFaces(self):
         return self.colors
         
+
         
 class Controller(object):
     def __init__(self): 
-        scene = canvas(background = color.gray(0.97))
-        scene.ambient=color.gray(0.7)
+        self.scene = canvas(background = color.gray(0.97))
+        self.scene.ambient=color.gray(0.7)
         self.cube3d = Cube3D()
-        scene.bind('keydown',self.onKey)
-        scene.bind('click',self.onClick)
-        scene.bind('mousedown',self.onMouseDown)
-        scene.bind('mouseup',self.onMouseUp)
-        scene.bind('mousemove',self.onMouseMove)
+        self.scene.bind('keydown',self.onKey)
+        self.scene.bind('click',self.onClick)
+        self.scene.bind('mousedown',self.onMouseDown)
+        self.scene.bind('mouseup',self.onMouseUp)
+        self.scene.bind('mousemove',self.onMouseMove)
         self.cubeRepr = Cube()
-        button(bind=self.reset, text="New cube")
-        button(bind=self.scramble, text = "Scramble")
-        button(bind=self.solve, text = "Solve")
+        self.activeWidgets = []
+        self.mode = 0
+        self.setWidgetMode(self.mode)
+        self.brushColor = 'front'
+
+    def setWidgetMode(self, mode):
+        #Takes an integer specifying what widgets to display 0 = default toy widget
+        self.mode = mode
+        for widget in self.activeWidgets:
+            widget.delete()
+        if mode == 0:
+            self.activeWidgets.append(button(bind=self.reset, text="New cube"))
+            self.activeWidgets.append(button(bind=self.scramble, text = "Scramble"))
+            self.activeWidgets.append(button(bind=self.solve, text = "Solve")) 
+            self.activeWidgets.append(button(bind=self.paintMode, text = "Paint"))
+        if mode == 1:
+            self.activeWidgets.append(button(bind=self.normalMode, text = "Back"))
+            self.activeWidgets.append(menu(choices = ['front','back','left','right','up','down'], bind = self.changeBrushColor))
+
+    def changeBrushColor(self, m):
+        self.brushColor = m.selected
+
+    def normalMode(self, b):
+        self.setWidgetMode(0)
+
+    def paintMode(self, b):
+        self.setWidgetMode(1)
 
     def generateScramble(self, length = 30):
         #Generates a scramble of max length length and returns a list of appropriate moves. Capitalized moves are counterclockwise turns.
@@ -323,11 +398,13 @@ class Controller(object):
             self.reset()
 
     def onClick(self, evt):
-        #print(evt.__dict__)
-        pass
+        if self.mode == 1:
+            obj = self.scene.mouse.pick
+            self.cube3d.updateStickerColor(obj, self.brushColor)
+
+        print(obj)
 
     def onMouseDown(self, evt):
-        #print(evt.__dict__)
         pass
 
     def onMouseUp(self, evt):

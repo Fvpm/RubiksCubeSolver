@@ -126,7 +126,7 @@ class Cube(object):
         self.solution.append(face)
         if self.verifyCube() == False:
             print(face)
-            raise Exception(face + "move fucked up")
+            raise Exception("Cube is broken/nonsolvable")
 
     def wholeTurn(self, axis):
         #axis should be in [x, X, y, Y, z, Z]
@@ -151,7 +151,7 @@ class Cube(object):
         self.solution.append(axis)
         if self.verifyCube() == False:
             print(axis)
-            raise Exception(axis + "move fucked up")
+            raise Exception("Cube is broken/unsolvable (axis rotation))
 
 
     def reduceSolution(self):

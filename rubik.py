@@ -22,6 +22,8 @@ class Controller(object):
         self.scene.bind('mouseup',self.onMouseUp)
         self.scene.bind('mousemove',self.onMouseMove)
 
+        self.undoList = []
+        self.redoList = []
         self.keyQueue = []
         self.moveQueue = 0
         self.activeWidgets = []
@@ -91,6 +93,10 @@ class Controller(object):
             self.activeWidgets.append(button(bind=self.solve, text = "Solve")) 
             self.activeWidgets.append(button(bind=self.paintMode, text = "Paint"))
             self.activeWidgets.append(button(bind=self.openSettings, text = "Settings"))
+            
+            self.activeWidgets.append(wtext(text='\n'))
+            self.activeWidgets.append(button(bind=self.undo, text = "Undo"))
+            self.activeWidgets.append(button(bind=self.redo, text = "Redo"))
         if mode == 1: #paint
             self.activeWidgets.append(button(bind=self.normalMode, text = "Back"))
             self.activeWidgets.append(menu(choices = self.colorNames, bind = self.changeBrushColor))
@@ -146,11 +152,30 @@ class Controller(object):
             self.activeWidgets.append(wtext(text = '\n'))
             self.activeWidgets.append(slider(min = 0.2, max = 2.0, step = 0.01, value = self.turnTime, bind = self.updateSolutionTime))
         if mode == 5: #blank
-            pass
+            self.activeWidgets.append(wtext(text = 'Generating solution...'))
         if mode == 6: #solve error
             self.activeWidgets.append(wtext(text = 'The inputted cube is considered unsolvable. Please fix any errors in paint mode before solving.\n'))
             self.activeWidgets.append(button(text = 'Back', bind = self.normalMode))
             self.activeWidgets.append(button(text = 'Paint', bind = self.paintMode))
+
+    def undo(self, b):
+        if len(self.undoList) == 0:
+            return
+        moveToUndo = self.undoList.pop()
+        self.redoList.append(moveToUndo)
+        if moveToUndo.islower():
+            backMove = moveToUndo.upper()
+        else:
+            backMove = moveToUndo.lower()
+        self.cube3d.rotate(backMove)
+
+    def redo(self, b):
+        if len(self.redoList) == 0:
+            return
+        moveToRedo = self.redoList.pop()
+        self.undoList.append(moveToRedo)
+        self.cube3d.rotate(moveToRedo)
+
     def updateSolutionTime(self, s):
         self.solutionTurnTime = s.value
         if self.mode == 4:
@@ -195,6 +220,7 @@ class Controller(object):
             self.moveQueue += 1
             if self.moveQueue > 1:
                 return
+            self.activeWidgets[0].disabled = True
             self.activeWidgets[3].disabled = True
             self.activeWidgets[5].disabled = True
             while self.moveQueue > 0:
@@ -209,6 +235,7 @@ class Controller(object):
                 self.activeWidgets[1].text = self.generateSolutionString()
                 self.cube3d.rotate(backmove)
                 self.moveQueue -= 1
+            self.activeWidgets[0].disabled = False
             self.activeWidgets[3].disabled = False
             self.activeWidgets[5].disabled = False
 
@@ -218,12 +245,14 @@ class Controller(object):
             self.moveQueue += 1
             if self.moveQueue > 1:
                 return
+            self.activeWidgets[0].disabled = True
             self.activeWidgets[2].disabled = True
             while self.moveQueue > 0:
                 self.solutionIndex += 1
                 self.activeWidgets[1].text = self.generateSolutionString()
                 self.cube3d.rotate(self.solution[self.solutionIndex-1])
                 self.moveQueue -= 1
+            self.activeWidgets[0].disabled = False
             self.activeWidgets[2].disabled = False
 
     def autoIncrement(self, b):
@@ -339,6 +368,8 @@ class Controller(object):
         self.cube3d = Cube3D(self.colors)
         self.cube3d.updateRotateTime(self.turnTime)
         self.cubeRepr = Cube()
+        self.undoList = []
+        self.redoList = []
 
     def solve(self):
             self.setWidgetMode(5)
@@ -360,6 +391,8 @@ class Controller(object):
         while len(self.keyQueue) > 0:
             key = self.keyQueue[0].key
             if key.lower() in ['f','b','l','r','u','d']:
+                self.redoList = []
+                self.undoList.append(key)
                 self.cube3d.rotate(key)
             self.keyQueue.pop(0)
         #self.scene.bind('keydown',self.onKey)

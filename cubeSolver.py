@@ -270,8 +270,11 @@ class CubeSolver(object):
                                     continue
                                     
                             else: #edge is on to
+                                count = 0
                                 while not cube.isFRFaceMatch():
-                                    print('262')
+                                    count += 1
+                                    if count == 6:
+                                        return False
                                     cube.move('u')
                                 if cube.stickers[33] == 'f': #case 30
                                     cube.moves(['Y','R','u','r','U','R','u','r'])

@@ -29,6 +29,13 @@ class Cube3D(object):
         for i in range(0,8):
             self.corners.append(Corner3D(i,self.colors))
 
+    def updateColors(self, newColors):
+        for cubie in self.centers + self.edges + self.corners:
+            cubie.updateColors(newColors)
+
+    def paintColors(self, newColors):
+        fo
+
     def updateRotateTime(self, newTime):
         self.rotateTime = newTime
 
@@ -127,6 +134,7 @@ class Cubie3D(object):
         self.stickers = []
         self.position = _position
         self.orientation = 0
+        self.colorVals = []
 
     def rotate(self, _axis, _angle):
         #rotates the piece around _axis by _angle. This is done instantaneously, so should be called many times for a smooth animation
@@ -141,6 +149,14 @@ class Cubie3D(object):
             piece.visible = False
             del piece
         del self.base
+
+    def updateColors(self, newColors):
+        for sticker in self.stickers:
+            for color in self.colorVals:
+                if sticker.color == color:
+                    sticker.color = newColors[self.colorVals.index(color)]
+        self.colorVals = newColors
+        
 
     def getPosition(self):
         return self.position
@@ -168,6 +184,7 @@ class Center3D(Cubie3D):
 
     def updateStickerColor(self, vbox, face):
         #input vbox, "f"
+        return
         sideIndex = {'u':0,'f':1,'l':2,'b':3,'r':4,'d':5}[face]
         index = 0
         while True:
@@ -183,6 +200,7 @@ class Center3D(Cubie3D):
         if move in ['f','u','d','b','l','r']:
             return
         #TODO add full cube rotations
+
 
 
 

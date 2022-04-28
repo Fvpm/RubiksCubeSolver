@@ -103,12 +103,20 @@ class CubeSolver(object):
         originalCube.solution = []
         cubes = [originalCube.copy()]
         cubesAfterCross = cls.bestCross(cubes)
+        if cubesAfterCross == False:
+            return False
         print("cross complete" + str(len(cubesAfterCross)))
         cubesAfterF2l = cls.bestF2l(cubesAfterCross)
+        if cubesAfterF2l == False:
+            return False
         print("f2l complete" + str(len(cubesAfterF2l)))
         cubesAfterOLL = cls.bestOLL(cubesAfterF2l)
+        if cubesAfterOLL == False:
+            return False
         print("oll complete" + str(len(cubesAfterOLL)))
         solvedCubes = cls.bestPLL(cubesAfterOLL)
+        if solvedCubes == False:
+            return False
         print("pll complete" + str(len(solvedCubes)))
         shortest = cls.reduceAxes(solvedCubes[0].solution)
         for cube in solvedCubes:
@@ -168,6 +176,7 @@ class CubeSolver(object):
                         break
                 count += 1
                 if count == 5:
+                    return False
                     print("ERROR no OLL case match. Cases should be complete.")
                     cube.prettyPrint()
                     raise Exception("no OLL case match. cases should be complete.")
@@ -191,7 +200,12 @@ class CubeSolver(object):
             #For f2l im basically following a set of algorithms http://www.rubiksplace.com/speedcubing/F2L-algorithms/ here. I tend to favor shorter options with no axis rotations. I would just undo these axis rotations afterwards anyways.
             #For the cases that are not included i am using accompanying pdf to fill in blanks
             #The algorithms assume we are filling the front right edge and that the needed corner piece is in that column. That means the corner piece will either be in the bottom right or can be found by rotating u several tims.
+            oCount = -1
             while not cube.isF2lSolved():
+                oCount += 1
+                if oCount > 200:
+                    return False
+                    
                 #print(cube.solution)
                 #cube.prettyPrint()
                 if cube.downCrossSolved() == False:
@@ -210,7 +224,11 @@ class CubeSolver(object):
                                 for move in ['r','U','R','u','Y','R','u2','r','u2','R','u','r']:
                                     cube.move(move)
                                 continue
+                            count = 0
                             while not cube.isFRFaceMatch():
+                                count += 1
+                                if count == 6:
+                                    return False
                                 cube.move('u')
                             if cube.stickers[33] == 'f' and cube.stickers[5] == 'r': #case 25
                                 for move in ['u','r','U','R','U','y','L','u','l']:
@@ -230,7 +248,11 @@ class CubeSolver(object):
                                     cube.moves(['Y','r2','F','U','f','u','r','U','r'])
                                     continue
                             else:#edge is on top
+                                count = 0
                                 while not cube.isFRFaceMatch():
+                                    count += 1
+                                    if count == 6:
+                                        return False
                                     cube.move('u')
                                 if cube.stickers[33] == 'f': #case 27
                                     cube.moves(['Y','R','U','r','u','R','U','r'])
@@ -249,6 +271,7 @@ class CubeSolver(object):
                                     
                             else: #edge is on to
                                 while not cube.isFRFaceMatch():
+                                    print('262')
                                     cube.move('u')
                                 if cube.stickers[33] == 'f': #case 30
                                     cube.moves(['Y','R','u','r','U','R','u','r'])
@@ -365,8 +388,6 @@ class CubeSolver(object):
                 print('f2l solution')
                 return outCubes
         lengths = [cube.getCompLength() for cube in outCubes]
-        print(outCubes)
-        print(lengths)
         average = sum(lengths) // len(lengths)
         lengths.sort()
         mean = lengths[len(lengths)//4]
@@ -410,7 +431,8 @@ class CubeSolver(object):
         inCubes.append(oCube.copy())
         
         for move in startMoves:
-            oCube.wholeTurn(move)
+            if oCube.wholeTurn(move) == False:
+                return False
             inCubes.append(oCube.copy())
         inCubes = cls.expandSearch(inCubes, 1)
         print(len(inCubes))

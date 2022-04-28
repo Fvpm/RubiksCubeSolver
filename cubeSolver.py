@@ -103,10 +103,13 @@ class CubeSolver(object):
         originalCube.solution = []
         cubes = [originalCube.copy()]
         cubesAfterCross = cls.bestCross(cubes)
+        print("cross complete" + str(len(cubesAfterCross)))
         cubesAfterF2l = cls.bestF2l(cubesAfterCross)
+        print("f2l complete" + str(len(cubesAfterF2l)))
         cubesAfterOLL = cls.bestOLL(cubesAfterF2l)
+        print("oll complete" + str(len(cubesAfterOLL)))
         solvedCubes = cls.bestPLL(cubesAfterOLL)
-        print("-----")
+        print("pll complete" + str(len(solvedCubes)))
         shortest = cls.reduceAxes(solvedCubes[0].solution)
         for cube in solvedCubes:
             cube.solution = cls.reduceAxes(cube.solution)
@@ -116,7 +119,7 @@ class CubeSolver(object):
                 shortest = sol
             #print(sol)
             #cube.prettyPrint()
-        print("-----")
+        print("solutions reduced")
         print(f'shortest with len {len(shortest)} is:')
         print(shortest)
         return shortest
@@ -358,8 +361,45 @@ class CubeSolver(object):
             cube.reduceSolution()
             #cube.solution = cls.reduceAxes(cube.solution)
             outCubes.append(cube)
-        return outCubes
+            if cube.isSolved():
+                print('f2l solution')
+                return outCubes
+        lengths = [cube.getCompLength() for cube in outCubes]
+        print(outCubes)
+        print(lengths)
+        average = sum(lengths) // len(lengths)
+        lengths.sort()
+        mean = lengths[len(lengths)//4]
+        average = mean if mean < average else average
+        newOutCubes = []
+        for cube in outCubes:
+            if cube.getCompLength() < average:
+                newOutCubes.append(cube)
+        if len(newOutCubes) == 0:
+            for cube in outCubes:
+                if cube.getCompLength() == average:
+                    newOutCubes.append(cube)
+                    break
+        return newOutCubes
 
+    @classmethod
+    def expandSearch(cls, cubes, depth):
+        if depth == 0:
+            return cubes
+        htms = ['f','F','f2','u','U','u2','l','L','l2','r','R','r2','d','D','d2','b','B','b2']
+        outCubes = []
+        count = 0
+        for cube in cubes:
+            if count % 100 == 0:
+                print(count)
+            for move in htms:
+                newCube = cube.copy()
+                newCube.move(move)
+                outCubes.append(newCube)
+        return cls.expandSearch(outCubes, depth-1)
+            
+        
+        
 
     @classmethod
     def bestCross(cls, cubes):
@@ -372,6 +412,8 @@ class CubeSolver(object):
         for move in startMoves:
             oCube.wholeTurn(move)
             inCubes.append(oCube.copy())
+        inCubes = cls.expandSearch(inCubes, 1)
+        print(len(inCubes))
         outCubes = []
         for cube in inCubes:
             while(not cube.downCrossSolved()):#Checking if this is solved
@@ -406,8 +448,27 @@ class CubeSolver(object):
             cube.reduceSolution()
             #cube.solution = cls.reduceAxes(cube.solution)
             outCubes.append(cube)
+            if cube.isSolved():
+                print('cross solution')
+                return outCubes
         #Add culling here later if desired
-        return outCubes
+        lengths = [cube.getCompLength() for cube in outCubes]
+        print(lengths)
+        average = sum(lengths) // len(lengths)
+        lengths.sort()
+        mean = lengths[len(lengths)//4] #this is the median? lol
+        average = mean if mean < average else average
+        newOutCubes = []
+        for cube in outCubes:
+            if cube.getCompLength() < average:
+                newOutCubes.append(cube)
+        if len(newOutCubes) == 0:
+            for cube in outCubes:
+                if cube.getCompLength() == average:
+                    newOutCubes.append(cube)
+                    break
+                    
+        return newOutCubes
 
     @classmethod
     def reduceAxes(cls, moveList):

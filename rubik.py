@@ -6,6 +6,7 @@ import pickle
         
 class Controller(object):
     def __init__(self): 
+        #Scene settings
         self.scene = canvas(background = color.gray(0.97))
         self.scene.ambient=color.gray(0.7)
         #self.scene.userzoom = False
@@ -13,15 +14,20 @@ class Controller(object):
         self.scene.forward = vector(-1,-1,-1)
         self.scene.camera.range = .5
 
+        #Cube objects
         self.cube3d = Cube3D()
         self.cubeRepr = Cube()
 
+        #Event binds
         self.scene.bind('keydown',self.onKey)
         self.scene.bind('click',self.onClick)
-        self.scene.bind('mousedown',self.onMouseDown)
-        self.scene.bind('mouseup',self.onMouseUp)
-        self.scene.bind('mousemove',self.onMouseMove)
+        #self.scene.bind('mousedown',self.onMouseDown)
+        #self.scene.bind('mouseup',self.onMouseUp)
+        #self.scene.bind('mousemove',self.onMouseMove)
 
+        #Program Variables.
+        self.moveCount = 0
+        self.startPosition = None
         self.undoList = []
         self.redoList = []
         self.keyQueue = []
@@ -34,10 +40,12 @@ class Controller(object):
         self.autoPlaying = False
         self.loadSettings()
 
+        #Load colors and widgets.
         self.setWidgetMode(self.mode)
         self.updateCubeColor()
 
     def loadSettings(self):
+        #Updates variables with settings from 'settings' file as saved in saveSetings. Takes no input and returns None
         self.colors = [color.white, color.red, color.green, color.orange, color.blue, color.yellow] #I pretty much immdiately overwrite this
         try:
             f = open("settings", 'rb')
@@ -58,11 +66,13 @@ class Controller(object):
 
 
     def saveSettings(self):
+        #updates 'settings' file with current variable values that should be saved between sessions
         settingsList = [self.colorNames, self.colorCodes, self.manualTurnTime, self.solutionTurnTime]
         f = open('settings','wb')
         pickle.dump(settingsList,f)
 
     def changeBrushButton(self, b):
+        #Event bind for buttons on paint screen. Takes a button object and searches saved colors to update the currently selected color value.
         i = 0
         while b.background != self.colors[i]:
             i += 1
@@ -73,7 +83,14 @@ class Controller(object):
         self.changeBrushColor(self.activeWidgets[1])
 
     def setWidgetMode(self, mode):
-        #Takes an integer specifying what widgets to display 0 = default toy widget
+        #Takes an integer specifying what widgets to display below the primary view
+        #0 : Regular
+        #1: Paint
+        #2: Settings
+        #3: Color Settings
+        #4: Solution Mode
+        #5: Loading solution...
+        #6: Solution Error
         if mode == 3 or mode == 4:
             self.scene.unbind('keydown',self.onKey)
         if mode == 2 and self.mode == 3:
@@ -97,6 +114,8 @@ class Controller(object):
             self.activeWidgets.append(wtext(text='\n'))
             self.activeWidgets.append(button(bind=self.undo, text = "Undo"))
             self.activeWidgets.append(button(bind=self.redo, text = "Redo"))
+            self.activeWidgets.append(wtext(text='\n Controls:\n(U)p      (D)own\n(L)eft    (R)ight\n(F)ront   (B)ack\nHold Shift to rotate counter-clockwise'))
+
         if mode == 1: #paint
             self.activeWidgets.append(button(bind=self.normalMode, text = "Back"))
             self.activeWidgets.append(menu(choices = self.colorNames, bind = self.changeBrushColor))
@@ -117,6 +136,7 @@ class Controller(object):
             self.activeWidgets.append(slider(min = 0.2, max = 2.0, step = 0.01, value = self.manualTurnTime, bind = self.updateManualTime))
             self.activeWidgets.append(wtext(text = "\nAutomatic turn time: "))
             self.activeWidgets.append(slider(min = 0.2, max = 2.0, step = 0.01, value = self.solutionTurnTime, bind = self.updateSolutionTime))
+            self.activeWidgets.append(wtext(text = '\n                                <--Faster--                             --Slower-->'))
         if mode == 3: #color settings
             self.activeWidgets.append(button(bind=self.openSettings, text = "Back"))
             self.activeWidgets.append(wtext(text = "\n Side | Color Name | Color Hex Code"))
@@ -151,7 +171,8 @@ class Controller(object):
             self.activeWidgets.append(button(text="▶", bind = self.autoIncrement))
             self.activeWidgets.append(wtext(text = '\n'))
             self.activeWidgets.append(slider(min = 0.2, max = 2.0, step = 0.01, value = self.turnTime, bind = self.updateSolutionTime))
-        if mode == 5: #blank
+            self.activeWidgets.append(wtext(text = '\n   <--Faster--                                --Slower-->'))
+        if mode == 5: #loading
             self.activeWidgets.append(wtext(text = 'Generating solution...'))
         if mode == 6: #solve error
             self.activeWidgets.append(wtext(text = 'The inputted cube is considered unsolvable. Please fix any errors in paint mode before solving.\n'))
@@ -159,6 +180,7 @@ class Controller(object):
             self.activeWidgets.append(button(text = 'Paint', bind = self.paintMode))
 
     def undo(self, b):
+        #Undoes the last manual move
         if len(self.undoList) == 0:
             return
         moveToUndo = self.undoList.pop()
@@ -170,6 +192,7 @@ class Controller(object):
         self.cube3d.rotate(backMove)
 
     def redo(self, b):
+        #Redoes the last manual move
         if len(self.redoList) == 0:
             return
         moveToRedo = self.redoList.pop()
@@ -177,26 +200,31 @@ class Controller(object):
         self.cube3d.rotate(moveToRedo)
 
     def updateSolutionTime(self, s):
+        #Updates solution mode rotate time based off slider value.
         self.solutionTurnTime = s.value
         if self.mode == 4:
             self.turnTime = self.solutionTurnTime
             self.updateRotateTime()
     
     def updateManualTime(self, s):
+        #Updates manual mode rotate time based off slider value
         self.manualTurnTime = s.value
 
     def updateRotateTime(self):
+        #Sends rotate time update to cube.
         self.cube3d.updateRotateTime(self.turnTime)
     
     def defaultColors(self, b):
+        #Sets colors to default and saves settings.
         self.colorNames = ["White", "Red", "Green", "Orange", "Blue", "Yellow"]
         self.colorCodes = ["FFFFFF","FF0000", "00FF00", "FFAA00", "0000FF", "FFFF00"]
         self.saveSettings()
         self.updateCubeColor()
-        self.setWidgetMode(2)
+        self.setWidgetMode(2) #Reload color settings to update values
         self.setWidgetMode(3)
     
     def generateSolutionString(self):
+        #Takes the current solution, which is a list of moves as well as the current index and outputs a string for use in VPython widget. No input, returns string
         outStr = "\n"
         s = ['>>'] + self.solution
         index = self.solutionIndex
@@ -216,6 +244,7 @@ class Controller(object):
 
 
     def moveLeft(self, b):
+        #Iterates the current solution left one in solution mode, no input or output
         if self.solutionIndex > 0:
             self.moveQueue += 1
             if self.moveQueue > 1:
@@ -240,7 +269,7 @@ class Controller(object):
             self.activeWidgets[5].disabled = False
 
     def moveRight(self, b):
-
+        #Iterates the current solution right one in solution mode, no input or output
         if self.solutionIndex + self.moveQueue < len(self.solution):
             self.moveQueue += 1
             if self.moveQueue > 1:
@@ -256,6 +285,7 @@ class Controller(object):
             self.activeWidgets[2].disabled = False
 
     def autoIncrement(self, b):
+        #Automatically increments solution mode to the right.
         if b.text == "||":
             b.text = '▶'
             self.autoPlaying = False
@@ -272,13 +302,14 @@ class Controller(object):
 
 
     def updateColor(self, i):
+        #Bound function that takes widget i (a widget in color settings), determines which cube face and setting the widget belongs to, and updates settings accordingly
         count = 0
         for widget in self.activeWidgets:
             if type(widget) == type(self.activeWidgets[3]):
                 count += 1
             if widget == i:
                 break
-        colorMap = {0:0,1:5,2:1,3:3,4:2,5:4} #some intrefacing between UD FB LR that makes sense for settings vs UFL BRD that applies to Cube3D colors input
+        colorMap = {0:0,1:5,2:1,3:3,4:2,5:4} #some interfacing between UD FB LR that makes sense for settings vs UFL BRD that applies to Cube3D colors input
         if count %2 == 1: #name
             self.colorNames[colorMap[(count-1)//2]] = i.text
         else:#code
@@ -288,6 +319,7 @@ class Controller(object):
         self.saveSettings()
 
     def verifyCode(self, text):
+        #Checks if its a valid RGB hexcode (6 digit hex)
         if len(text) != 6:
             return False
         for char in text.lower():
@@ -297,7 +329,7 @@ class Controller(object):
 
 
     def updateCubeColor(self):
-        #actually take the actual colors on the actual cube.
+        #Sends updated colors to 3dCube object, updating display to match settings. No input or direct output.
         colorList = []
         for code in self.colorCodes:
             v = []
@@ -317,19 +349,24 @@ class Controller(object):
     #    self.turnTime = s.value
 
     def changeBrushColor(self, m):
+        #Bound function to menu widget in color settings. Changes the brush color from the drop-down menu in settings.
         index = self.colorNames.index(m.selected)
         self.brushColor = {0:'u', 1:'f', 2:'l', 3:'b', 4:'r', 5:'d'}[index]
 
     def colorSettings(self, b):
+        #Bound function to button. Chnages display to color settings.
         self.setWidgetMode(3)
 
     def normalMode(self, b):
+        #Bound function to button. Chnages display to normal mode.
         self.setWidgetMode(0)
 
     def openSettings(self, b):
+        #Bound function to button. Chnages display to Settings.
         self.setWidgetMode(2)
 
     def paintMode(self, b):
+        #Bound function to button. Chnages display to paint mode
         self.setWidgetMode(1)
 
     def generateScramble(self, length = 30):
@@ -372,17 +409,18 @@ class Controller(object):
         self.redoList = []
 
     def solve(self):
+        #Bound function to button. Updates widget display and activates cube solver.
             self.setWidgetMode(5)
             self.solutionIndex = 0
             cubeRepr = self.cube3d.toCube()
-            self.solution = CubeSolver.solve(cubeRepr)
+            self.solution = CubeSolver.solve(cubeRepr) #This line should take several seconds
             if self.solution == False:
                 self.setWidgetMode(6)
                 return
             self.setWidgetMode(4)
 
     def onKey(self, evt):
-        #Called by keypress event listener
+        #Called by keypress event listener to determine keyboard input
         #print(evt.__dict__)
         self.keyQueue.append(evt)
         if len(self.keyQueue) > 1:
@@ -404,13 +442,30 @@ class Controller(object):
 
 
     def onMouseDown(self, evt):
-        pass
+        #Unused function for mouse down event
+        return
+        if self.mode == 0:
+            self.item = self.scene.mouse.pick
+            if self.item != None:
+                #TODO check if its a sticker
+                self.moveCount = 0
+                self.startPosition = evt.pos
 
     def onMouseUp(self, evt):
         #print(evt.__dict__)
         pass
 
     def onMouseMove(self, evt):
+        #unused function for mouse move event
+        return
+        if self.mode == 0:
+            self.moveCount += 1
+            if self.moveCount == 5:
+                endPosition = evt.pos
+                movement = endPosition - self.startPosition
+                move = self.cube3d.mouseMove(self.item, movement)
+                if move != None:
+                    self.undoList.append(move)
         #print(evt.__dict__)
         pass
         

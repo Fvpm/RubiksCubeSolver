@@ -29,12 +29,84 @@ class Cube3D(object):
         for i in range(0,8):
             self.corners.append(Corner3D(i,self.colors))
 
+    def mouseMove(self, vobject, movement):
+        for corner in self.corners:
+            if vobject in corner.stickers:
+                upVectors = [0]*6
+                moves = ['u','f','l','b','r','d']
+                for center in self.centers:
+                    upVectors[center.position] = center.stickers[0].up
+                print(upVectors)
+                print(corner.stickers)
+                sideGetters = []
+                for sticker in corner.stickers:
+                    if sticker != vobject:
+                        sideGetters.append(sticker)
+                potentialMoves = []
+                print(sideGetters)
+                for i in range(6):
+                    for sticker in sideGetters:
+                        if sticker.up.norm().equals(upVectors[i].norm()):
+                            potentialMoves.append(i)
+                print("potential moves " + str(potentialMoves))
+                firstStrength = movement.proj(upVectors[potentialMoves[0]])
+                secondStrength = movement.proj(upVectors[potentialMoves[1]])
+                firstMag = mag(firstStrength)
+                if firstStrength.norm().equals(upVectors[potentialMoves[0]].norm()) == False:
+                    firstMag *= -1
+                secondMag = mag(secondStrength)
+                if secondStrength.norm().equals(upVectors[potentialMoves[1]].norm()) == False:
+                    secondMag *= -1
+                if abs(firstMag) > abs(secondMag):
+                    if firstMag > 0: 
+                        if corner.faces.index(potentialMoves[0]) +1 %3 == corner.faces.index(potentialMoves[1]):
+                            #its the clockwise turn
+                            self.rotate(moves[potentialMoves[1]])
+                            return moves[potentialMoves[1]]
+                        else: #counterclockwise
+                            self.rotate(moves[potentialMoves[1]].upper())
+                            return moves[potentialMoves[1]].upper()
+                    else:
+                        if corner.faces.index(potentialMoves[0]) +1 %3 == corner.faces.index(potentialMoves[1]):
+                            self.rotate(moves[potentialMoves[1]].upper())
+                            return moves[potentialMoves[1]].upper()
+                        else: 
+                            self.rotate(moves[potentialMoves[1]])
+                            return moves[potentialMoves[1]]
+                else:
+                    if secondMag > 0: 
+                        if corner.faces.index(potentialMoves[1]) +1 %3 == corner.faces.index(potentialMoves[0]):
+                            #its the clockwise turn
+                            self.rotate(moves[potentialMoves[0]])
+                            return moves[potentialMoves[0]]
+                        else: #counterclockwise
+                            self.rotate(moves[potentialMoves[0]].upper())
+                            return moves[potentialMoves[0]].upper()
+                    else:
+                        if corner.faces.index(potentialMoves[1]) +1 %3 == corner.faces.index(potentialMoves[0]):
+                            #its the clockwise turn
+                            self.rotate(moves[potentialMoves[0]].upper())
+                            return moves[potentialMoves[0]].upper()
+                        else: #counterclockwise
+                            self.rotate(moves[potentialMoves[0]])
+                            return moves[potentialMoves[0]]
+                raise Exception("Mouse click move error")
+                    
+
+                        
+
+                    
+                return
+        for edge in self.edges:
+            if vobject in edge.stickers:
+                
+                return
+        return None
+
     def updateColors(self, newColors):
         for cubie in self.centers + self.edges + self.corners:
             cubie.updateColors(newColors)
 
-    def paintColors(self, newColors):
-        fo
 
     def updateRotateTime(self, newTime):
         self.rotateTime = newTime
@@ -300,6 +372,7 @@ class Corner3D(Cubie3D):
         self.orientation = 0
 
         faces = self.faceInfoDict[position]
+        self.faces = faces.copy()
         basePos = self.vectorDict[faces[0]] + self.vectorDict[faces[1]] + self.vectorDict[faces[2]]
 
         self.colorVals = colors
